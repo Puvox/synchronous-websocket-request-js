@@ -5,7 +5,7 @@ Even though websocket's concept inherently disregards the synchronous nature, th
 ## How does it work
 `fetchSync` method works like the synchronous `fetch`. Signature of `fetchSync` method looks like this:
 ```
-async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_response_uniq_id', expectedValue = null, keyOfIdToSend = 'ws_request_uniq_id')
+async fetchSync(dataToSend = {}, timeoutMs = 10000, keyOfRequestId='ws_request_uniq_id', keyOfResponseId='ws_response_uniq_id', responseValue=null)
 ```
 However, you only need to provide the first argument (which must be an `Object`, and other arguments are optional. Example:
 ```

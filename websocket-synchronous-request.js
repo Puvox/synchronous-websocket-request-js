@@ -46,15 +46,15 @@ class ws_sync {
         return this.wsc !== null && this.wsc.readyState === 1;
     }
 
-    async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_response_uniq_id', expectedValue = null, keyOfIdToSend = 'ws_request_uniq_id')
+    async fetchSync(dataToSend = {}, timeoutMs = 10000, keyOfRequestId='ws_request_uniq_id', keyOfResponseId='ws_response_uniq_id', responseValue=null)
     {
         const uniqueId = this.waiterPrefix + '_' + this.uuidv4();
         if (uniqueId in this.waitedSyncCallbacks) {
             throw new Error("WS FETCH: uniqueId already exists - "+ uniqueId + "; Please use an unique on");
         }
-        this.waitedSyncCallbacks_keys[uniqueId] = {k:expectedKey, v:expectedValue};
+        this.waitedSyncCallbacks_keys[uniqueId] = {k: keyOfResponseId, v: responseValue};
         const data_new = this.cloneObjectDestructuve (dataToSend);
-        data_new[keyOfIdToSend] = uniqueId;
+        data_new[keyOfRequestId] = uniqueId;
         this.waitedSyncCallbacks[uniqueId] = null;
     
         if (this.send(data_new))
@@ -103,9 +103,10 @@ class ws_sync {
         const entries = Object.entries(this.waitedSyncCallbacks_keys);
         for (const [uniqId, KeyValuePair] of entries) {
             const uniqIdKeyName = KeyValuePair.k;
-            const expectedValue = KeyValuePair.v;
+            const valueOfKey = KeyValuePair.v;
             if (uniqIdKeyName in response) {
-                if (response[uniqIdKeyName] === expectedValue || expectedValue === uniqId) {
+                // if it was the expected value, or if it was the uniqId
+                if (response[uniqIdKeyName] === valueOfKey || (valueOfKey === null && response[uniqIdKeyName] === uniqId)) {
                     foundResponse = response;
                     // remove if this is the default key
                     // if (uniqIdKeyName === 'ws_response_uniq_id' && uniqId in this.waitedSyncCallbacks) {
