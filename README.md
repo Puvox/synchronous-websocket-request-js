@@ -3,29 +3,25 @@ Even though websocket's concept inherently disregards the synchronous nature, th
 
 
 ## How does it work
-Alike the traditional `fetch` method, this wrapper has similar method named  `fetchSync`, which works the following way (note, the data you are sending to server, should be an `Object`):
+`fetchSync` method works like the synchronous `fetch`. Signature of `fetchSync` method looks like this:
+```
+async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_response_uniq_id', expectedValue = null, keyOfIdToSend = 'ws_request_uniq_id')
+```
+However, you only need to provide the first argument (which must be an `Object`, and other arguments are optional. Example:
 ```
 const WebSocket = require('ws');
 const WsSyncRequest = require('ws-sync-request');
+var WSR_instance = null;
 
 const ws = new WebSocket('ws://127.0.0.1:33479');
-var WSR = null;
-
 ws.on('open', ()=> {
-	console.log('WS OPENED CLIENT CONNECT');
-	WSR = new WsSyncRequest(this.wsc);
-	sampleRequest();
+	WSR_instance = new WsSyncRequest(ws);
 }); 
 
-async function sampleRequest() {
-	const response = await WSR.fetchSync({"mykey": "myValue"}, 5000); // timeout 5000 MS
-	console.log (response);
-}
-```
+// then anywhere you can use:
+const response = await WSR_instance.fetchSync({"mykey": "myValue"}, 5000); // timeout 5000 MS
+console.log (response);
 
-Signature of `fetchSync` method looks like this (you only need to provide the first argument, others can be left as default):
-```
-async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_response_uniq_id', expectedValue = null, keyOfIdToSend = 'ws_request_uniq_id')
 ```
 
 In the backgrounds, the wrapper 'initiates a request' (using `ws.send()`) and waits (using asynchronous 'sleep' cycles) till it gets response from server-side. The data, that is being sent to server, automatically includes the generated unique ID. That unique ID is being recognized on server-side, and the response you send from server back to front-end, should also include that unique ID. After that response is received back, the promise is resolved.
