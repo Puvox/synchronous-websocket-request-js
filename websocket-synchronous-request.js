@@ -4,7 +4,6 @@ class ws_sync {
     waitedSyncCallbacks = {};
     waitedSyncCallbacks_keys = {};
     waiterPrefix = "id";
-    waiterKey = "ws_awaited_client_call_uniq_id";
     loopPauseWaitIntervalMS = 500;
 
     wsc = null;
@@ -47,7 +46,7 @@ class ws_sync {
         return this.wsc !== null && this.wsc.readyState === 1;
     }
 
-    async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_reponse_key', expectedValue = null)
+    async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_response_uniq_id', expectedValue = null, keyOfIdToSend = 'ws_request_uniq_id')
     {
         const uniqueId = this.waiterPrefix + '_' + this.uuidv4();
         if (uniqueId in this.waitedSyncCallbacks) {
@@ -55,7 +54,7 @@ class ws_sync {
         }
         this.waitedSyncCallbacks_keys[uniqueId] = {k:expectedKey, v:expectedValue};
         const data_new = this.cloneObjectDestructuve (dataToSend);
-        data_new[this.waiterKey] = uniqueId;
+        data_new[keyOfIdToSend] = uniqueId;
         this.waitedSyncCallbacks[uniqueId] = null;
     
         if (this.send(data_new))
@@ -109,7 +108,7 @@ class ws_sync {
                 if (response[uniqIdKeyName] === expectedValue || expectedValue === uniqId) {
                     foundResponse = response;
                     // remove if this is the default key
-                    // if (uniqIdKeyName === 'ws_reponse_key' && uniqId in this.waitedSyncCallbacks) {
+                    // if (uniqIdKeyName === 'ws_response_uniq_id' && uniqId in this.waitedSyncCallbacks) {
                     //     delete response[uniqIdKeyName];
                     // }
                     this.waitedSyncCallbacks[uniqId] = { error: null, result: foundResponse };

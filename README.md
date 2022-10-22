@@ -23,33 +23,34 @@ async function sampleRequest() {
 }
 ```
 
+Signature of `fetchSync` method looks like this (you only need to provide the first argument, others can be left as default):
+```
+async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedKey = 'ws_response_uniq_id', expectedValue = null, keyOfIdToSend = 'ws_request_uniq_id')
+```
+
 In the backgrounds, the wrapper 'initiates a request' (using `ws.send()`) and waits (using asynchronous 'sleep' cycles) till it gets response from server-side. The data, that is being sent to server, automatically includes the generated unique ID. That unique ID is being recognized on server-side, and the response you send from server back to front-end, should also include that unique ID. After that response is received back, the promise is resolved.
 
-To be specific, at server-side you will receiver the same object, but there will be added additional key `ws_awaited_client_call_uniq_id` in the received object, so it will look like:
+To be specific, at server-side you will receiver the same object, but there will be added additional key `ws_request_uniq_id`(_can be overriden from `fetchSync` args_) in the sent object, so it will look like:
 ```
 {
+    "ws_request_uniq_id": "id_1234....",
+    // and then your actual datas to send in request
     "mykey": "myValue",
-    "ws_awaited_client_call_uniq_id": "id_1234...."
 }
 ```
-then from the server-side, you should respond with the object, where there is a key `ws_reponse_key` and has the same ID value that was received (i.e. `id_1234`), so your server response would look like:
+then from the server-side, you should respond with the object, where there is a key `ws_response_uniq_id`(_can be overriden from `fetchSync` args_) and has the same ID value that was received (i.e. `id_1234`), so your server response would look like:
 ```
 {
-    "ws_reponse_key": "id_1234....",
-    // and then your actual datas
+    "ws_response_uniq_id": "id_1234....",
+    // and then your actual datas to respond from server
     "foo": "bar"
 }
 ```
-Note: if you are unable to change the server-response object, then you might use the existing response key-values to match & recognize incoming data. For that, you will need to override the above call and use:
-```
-... await WSR.fetch({"mykey": "myValue"}, 5000, "foo", "bar");
-```
-So, when websocket client will see the incoming object, which has key named `foo` with the value `bar`, then it considers that is the expected awaited request, and will resolve to that response.
+So, when websocket client will see the incoming object, which has key named `ws_response_uniq_id` with the value `id_1234...`, then it considers that is the expected awaited request, and will resolve to that response.
 
 
 ## server example
 If you still don't understand how it works from server-side, see example in `/example` folder.
-
 
 
 
