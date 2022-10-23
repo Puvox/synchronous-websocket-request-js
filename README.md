@@ -1,5 +1,5 @@
 # sync-ws-request
-Even though websocket's concept inherently disregards the synchronous nature, there are some edge-cases, when users might still need to make synchronous request-response, while they might be using websockets ([`ws` module](https://www.npmjs.com/package/ws)). This lightweight single-file wrapper (without any dependencies) will help you to do that.
+Even though websocket's concept inherently disregards the synchronous nature, there are some edge-cases, when users might still need to make synchronous request-response, while they might be using websockets ([`ws` module](https://www.npmjs.com/package/ws)). This lightweight single-file wrapper (without any dependencies) will help you to do that. To describe in two words, all what this wrapper does is that it 'initiates a request' (using `ws.send()`) and waits (using asynchronous 'sleep' cycles) till it gets response from server-side. 
 
 
 ## How does it work
@@ -18,15 +18,12 @@ ws.on('open', ()=> {
 	WSR_instance = new WsSyncRequest(ws);
 }); 
 
-// then anywhere you can use:
+// ... then anywhere you can use:
 const response = await WSR_instance.fetchSync({"mykey": "myValue"}, 5000); // timeout 5000 MS
 console.log (response);
 
 ```
-
-Short explanation: In the backgrounds, the wrapper 'initiates a request' (using `ws.send()`) and waits (using asynchronous 'sleep' cycles) till it gets response from server-side. 
-
-Long explanation: The data, that is being sent to server, automatically includes the generated unique ID (there will be additional key `ws_request_uniq_id`) in the sent object, so it will look like:
+The data, that is being sent to server, automatically includes the generated unique ID (there will be additional key `ws_request_uniq_id`) in the sent object, so it will look like:
 ```
 {
     "ws_request_uniq_id": "id_1234....",
