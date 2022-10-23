@@ -24,9 +24,9 @@ console.log (response);
 
 ```
 
-In the backgrounds, the wrapper 'initiates a request' (using `ws.send()`) and waits (using asynchronous 'sleep' cycles) till it gets response from server-side. The data, that is being sent to server, automatically includes the generated unique ID. That unique ID is being recognized on server-side, and the response you send from server back to front-end, should also include that unique ID. After that response is received back, the promise is resolved.
+Short explanation: In the backgrounds, the wrapper 'initiates a request' (using `ws.send()`) and waits (using asynchronous 'sleep' cycles) till it gets response from server-side. 
 
-To be specific, at server-side you will receiver the same object, but there will be added additional key `ws_request_uniq_id`(_can be overriden from `fetchSync` args_) in the sent object, so it will look like:
+Long explanation: The data, that is being sent to server, automatically includes the generated unique ID (there will be additional key `ws_request_uniq_id`) in the sent object, so it will look like:
 ```
 {
     "ws_request_uniq_id": "id_1234....",
@@ -34,7 +34,7 @@ To be specific, at server-side you will receiver the same object, but there will
     "mykey": "myValue",
 }
 ```
-then from the server-side, you should respond with the object, where there is a key `ws_response_uniq_id`(_can be overriden from `fetchSync` args_) and has the same ID value that was received (i.e. `id_1234`), so your server response would look like:
+That unique ID can be recognized on server-side, and then from the server-side, you should respond with the object (which includes a key `ws_response_uniq_id` which value is that same unique ID `id_1234`), so your server response would look like:
 ```
 {
     "ws_response_uniq_id": "id_1234....",
@@ -42,8 +42,8 @@ then from the server-side, you should respond with the object, where there is a 
     "foo": "bar"
 }
 ```
-So, when websocket client will see the incoming object, which has key named `ws_response_uniq_id` with the value `id_1234...`, then it considers that is the expected awaited request, and will resolve to that response (If you still don't understand how it works from server-side, see example in `example.js` folder).
-
+So, when websocket client will see that incoming object, and recognizes the unique ID, so it will resolve the awaited request.
+(_You can check an [`example.js`](https://github.com/Puvox/synchronous-websocket-request-js/blob/main/example.js) for full reproducable example_).
 
 
 ## links
