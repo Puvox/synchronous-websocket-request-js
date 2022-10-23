@@ -13,7 +13,7 @@ const WebSocket = require('ws');
 const WsSyncRequest = require('ws-sync-request');
 var WSR_instance = null;
 
-const ws = new WebSocket('ws://127.0.0.1:33479');
+const ws = new WebSocket('ws://127.0.0.1:9999');
 ws.on('open', ()=> {
 	WSR_instance = new WsSyncRequest(ws);
 }); 
@@ -42,11 +42,7 @@ then from the server-side, you should respond with the object, where there is a 
     "foo": "bar"
 }
 ```
-So, when websocket client will see the incoming object, which has key named `ws_response_uniq_id` with the value `id_1234...`, then it considers that is the expected awaited request, and will resolve to that response.
-
-
-## server example
-If you still don't understand how it works from server-side, see example in `/example` folder.
+So, when websocket client will see the incoming object, which has key named `ws_response_uniq_id` with the value `id_1234...`, then it considers that is the expected awaited request, and will resolve to that response (If you still don't understand how it works from server-side, see example in `example.js` folder).
 
 
 
