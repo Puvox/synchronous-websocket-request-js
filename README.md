@@ -10,18 +10,48 @@ async fetchSync(dataToSend = {}, timeoutMs = 10000, keyOfRequestId='ws_request_u
 However, you only need to provide the first argument (which must be an `Object`, and other arguments are optional. Example:
 ```
 const WebSocket = require('ws');
-const WsSyncRequest = require('ws-sync-request');
-var WSR_instance = null;
+const WsSyncReq = require('./websocket-synchronous-request.js');
 
-const ws = new WebSocket('ws://127.0.0.1:9999');
-ws.on('open', ()=> {
-	WSR_instance = new WsSyncRequest(ws);
-}); 
+// init client
+function init_client() {
+    const ws_client = new WebSocket('ws://127.0.0.1:9999');
+    var WSR_instance = null;
+    ws_client.on('open', ()=> {
+        WSR_instance = new WsSyncReq(ws_client);
+        // ...
+        // then anywhere you can use
+        sampleCall();
+    }); 
+}
+async function sampleCall() {
+    const response = await WSR_instance.fetchSync({"mykey": "myValue"}, 5000); // timeout i.e. 5000 MS
+    console.log ('>>> After waiting synchronously, client got response:', response);
+    process.exit();
+}
 
-// ... then anywhere you can use:
-const response = await WSR_instance.fetchSync({"mykey": "myValue"}, 5000); // timeout 5000 MS
-console.log (response);
 
+// init example server
+function init_server()
+{
+    const ws_server = new WebSocket.Server({port: 9999} );
+    ws_server.on('connection', function(WSS) {
+        ...
+        WSS.on('message', function(message) {
+            let object = JSON.parse(message);
+            console.log ('>>> server received:', object);
+            const uniqId = object.ws_request_uniq_id; // store the ID variable in the same scope to avoid rewriting it from different symultaneous requests
+            // ########################################
+            // make any dummy asynchronous action in backend and response back
+            setTimeout(() => {
+                WSS.send(JSON.stringify({name: 'Nicolas', 'age': 43, ws_response_uniq_id:uniqId}));
+            }, 2000);
+        });
+        ...
+    });
+}
+
+init_server();
+init_client();
 ```
 The data, that is being sent to server, automatically includes the generated unique ID (there will be additional key `ws_request_uniq_id`) in the sent object, so it will look like:
 ```
@@ -40,7 +70,6 @@ That unique ID can be recognized on server-side, and then from the server-side, 
 }
 ```
 So, when websocket client will see that incoming object, and recognizes the unique ID, so it will resolve the awaited request.
-(_You can check an [`example.js`](https://github.com/Puvox/synchronous-websocket-request-js/blob/main/example.js) for full reproducable example_).
 
 
 ## links
