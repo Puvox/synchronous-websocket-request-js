@@ -10,7 +10,7 @@ async fetchSync(dataToSend = {}, timeoutMs = 10000, keyOfRequestId='ws_request_u
 However, you only need to provide the first argument (which must be an `Object`, and other arguments are optional. Example:
 ```
 const WebSocket = require('ws');
-const WsSyncReq = require('./websocket-synchronous-request.js');
+const WsSyncReq = require('websocket-synchronous-request');
 
 // init client
 function init_client() {
