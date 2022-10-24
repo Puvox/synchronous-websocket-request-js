@@ -30,23 +30,21 @@ async function sampleCall() {
 }
 
 
-// init example server
+// init example dummy server
 function init_server()
 {
     const ws_server = new WebSocket.Server({port: 9999} );
     ws_server.on('connection', function(WSS) {
-        ...
         WSS.on('message', function(message) {
             let object = JSON.parse(message);
             console.log ('>>> server received:', object);
-            const uniqId = object.ws_request_uniq_id; // store the ID variable in the same scope to avoid rewriting it from different symultaneous requests
+            const uniqId = object.ws_request_uniq_id; // remember to store the ID in scope-resistent manner, to avoid rewriting it from simultaneous requests
             // ########################################
             // make any dummy asynchronous action in backend and response back
             setTimeout(() => {
                 WSS.send(JSON.stringify({name: 'Nicolas', 'age': 43, ws_response_uniq_id:uniqId}));
             }, 2000);
         });
-        ...
     });
 }
 
