@@ -22,15 +22,16 @@ class ws_sync {
         );
     }
 
-	sleep(ms) {
-		return new Promise(resolve => this.setTimeout_safe(resolve, ms));
-	}
-	// immitating ccxt's setTimeout
-	setTimeout_safe (done, ms) {
-		const self = this; const targetTime = Date.now() + ms; if (ms >= 2147483647) { throw new Error ('setTimeout() function was called with unrealistic value of ' + ms.toString ()); }  let clearInnerTimeout = () => {}; let active = true; const id = setTimeout (() => { active = true; const rest = targetTime - Date.now (); if (rest > 0) { clearInnerTimeout = self.setTimeout_safe (done, rest, setTimeout, targetTime); } else { done (); } }, ms); return function clear () { if (active) { active = false; clearTimeout (id); } clearInnerTimeout (); };
-	}
+    sleep(ms) {
+        return new Promise(resolve => this.setTimeout_safe(resolve, ms));
+    }
 
-	// https://stackoverflow.com/a/44782052/2377343
+    // immitating ccxt's setTimeout
+    setTimeout_safe (done, ms) {
+        const self = this; const targetTime = Date.now() + ms; if (ms >= 2147483647) { throw new Error ('setTimeout() function was called with unrealistic value of ' + ms.toString ()); }  let clearInnerTimeout = () => {}; let active = true; const id = setTimeout (() => { active = true; const rest = targetTime - Date.now (); if (rest > 0) { clearInnerTimeout = self.setTimeout_safe (done, rest, setTimeout, targetTime); } else { done (); } }, ms); return function clear () { if (active) { active = false; clearTimeout (id); } clearInnerTimeout (); };
+    }
+
+    // https://stackoverflow.com/a/44782052/2377343
     cloneObjectDestructuve(orig){
         return Object.assign(Object.create(Object.getPrototypeOf(orig)), orig);
     }
