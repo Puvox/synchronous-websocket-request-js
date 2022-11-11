@@ -35,6 +35,11 @@ class ws_sync {
     cloneObjectDestructuve(orig){
         return Object.assign(Object.create(Object.getPrototypeOf(orig)), orig);
     }
+    
+    isString(x) { return Object.prototype.toString.call(x) === "[object String]"; }
+	isInteger(x) { return Number.isInteger(x); }
+	isObject(variable){ return typeof variable === 'object' && variable !== null; }
+    isKeyType(x) { return this.isString(x) || this.isInteger(x); }
 
     send(data)
     {
@@ -47,15 +52,26 @@ class ws_sync {
         return this.wsc !== null && this.wsc.readyState === 1;
     }
 
-    async fetchSync(dataToSend = {}, timeoutMs = 10000, keyOfRequestId='ws_request_uniq_id', keyOfResponseId='ws_response_uniq_id', responseValue=null)
+    keyOfRequestId = 'ws_request_uniq_id';
+    keyNameOrFullObject = 'ws_response_uniq_id';
+    async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedObjectStructure = null)
     {
         const uniqueId = this.waiterPrefix + '_' + this.uuidv4();
         if (uniqueId in this.waitedSyncCallbacks) {
             throw new Error("WS FETCH: uniqueId already exists - "+ uniqueId + "; Please use an unique on");
         }
-        this.waitedSyncCallbacks_keys[uniqueId] = {k: keyOfResponseId, v: responseValue};
+        let expectedObj = null;
+        if (expectedObjectStructure === null) {
+            expectedObj = {};
+            expectedObj[this.keyNameOrFullObject] = uniqueId;
+        } else if (this.isObject(expectedObjectStructure)) {
+            expectedObj = expectedObjectStructure;
+        } else { 
+            throw new Error("WS SYNC FETCH: expectedObjectStructure argument must be 'null' or an object. Read more in package's readme");
+        } 
+        this.waitedSyncCallbacks_keys[uniqueId] = expectedObj;
         const data_new = this.cloneObjectDestructuve (dataToSend);
-        data_new[keyOfRequestId] = uniqueId;
+        data_new[this.keyOfRequestId] = uniqueId;
         this.waitedSyncCallbacks[uniqueId] = null;
     
         if (this.send(data_new))
@@ -64,22 +80,18 @@ class ws_sync {
             while (true)
             {
                 if (!this.checkIfWsLive()) return null;
-                if ((Date.now() - start) > timeoutMs)
-                {
+                if ((Date.now() - start) > timeoutMs) {
                     return { error : "Request lasted more that timeout ms: " + timeoutMs + " [ "+ uniqueId +"]" +  dataToSend, result : null};
                 }
                 await this.sleep(this.loopPauseWaitIntervalMS);
-                if (uniqueId in this.waitedSyncCallbacks)
-                {
+                if (uniqueId in this.waitedSyncCallbacks) {
                     const value = this.waitedSyncCallbacks[uniqueId];
-                    if (value != null)
-                    {
+                    if (value != null) {
                         delete this.waitedSyncCallbacks[uniqueId];
                         return value;
                     }
                 } 
-                else
-                {
+                else {
                     var msg = "Strange. The unique id " + uniqueId + " doesn't exist in dict. this should be impossible. " + data;
                     return { error : msg, result : null };
                 }
@@ -100,21 +112,26 @@ class ws_sync {
         catch(exc)  {
             throw new Error("WS. Could not parse JSON: " + fullPayload + " | EXCEPTION:" + exc.toString() );
         }
-        let foundResponse = null;
-        const entries = Object.entries(this.waitedSyncCallbacks_keys);
-        for (const [uniqId, KeyValuePair] of entries) {
-            const uniqIdKeyName = KeyValuePair.k;
-            const valueOfKey = KeyValuePair.v;
-            if (uniqIdKeyName in response) {
-                // if it was the expected value, or if it was the uniqId
-                if (response[uniqIdKeyName] === valueOfKey || (valueOfKey === null && response[uniqIdKeyName] === uniqId)) {
-                    foundResponse = response;
-                    // remove if this is the default key
-                    // if (uniqIdKeyName === 'ws_response_uniq_id' && uniqId in this.waitedSyncCallbacks) {
-                    //     delete response[uniqIdKeyName];
-                    // }
-                    this.waitedSyncCallbacks[uniqId] = { error: null, result: foundResponse };
+        for (const [uniqId, kvpObject] of Object.entries(this.waitedSyncCallbacks_keys)) {
+            let found = true;
+            let valuesArray = Object.entries(kvpObject);
+            if (valuesArray.length == 0) {
+                found = false;
+            } else {
+                for (const [keyName, valueOfKey] of valuesArray) {
+                    if (keyName in response) {
+                        if (valueOfKey !== undefined && response[keyName] !== valueOfKey) {
+                            found = false;
+                            break;
+                        }
+                    } else {
+                        found = false;
+                        break;
+                    }
                 }
+            }
+            if (found) {
+                this.waitedSyncCallbacks[uniqId] = { error: null, result: response };
             }
         }
     }

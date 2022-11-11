@@ -5,17 +5,17 @@ Even though websocket's concept inherently disregards the synchronous nature, th
 ## How does it work
 `fetchSync` method works like the synchronous `fetch`. Signature of `fetchSync` method looks like this:
 ```
-async fetchSync(dataToSend = {}, timeoutMs = 10000, keyOfRequestId='ws_request_uniq_id', keyOfResponseId='ws_response_uniq_id', responseIdValue=null)
+async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedObjectStructure = null)
 ```
 However, you only need to provide the first argument (which must be an `Object`, and other arguments are optional. Example:
 ```
 const WebSocket = require('ws');
-const WsSyncReq = require('websocket-synchronous-request');
+const WsSyncReq = require('ws-sync-request');
 
 // init client
+var WSR_instance = null;
 function init_client() {
     const ws_client = new WebSocket('ws://127.0.0.1:9999');
-    var WSR_instance = null;
     ws_client.on('open', ()=> {
         WSR_instance = new WsSyncReq(ws_client);
         // ...
@@ -24,11 +24,12 @@ function init_client() {
     }); 
 }
 async function sampleCall() {
-    const response = await WSR_instance.fetchSync({"mykey": "myValue"}, 5000); // timeout i.e. 5000 MS
+    // timeout i.e. 5000 MS
+    const response = await WSR_instance.fetchSync({"hello":"world"}, 5000, null); 
+    //  or instead of 'null' you can add 3rd argument to force match with received object values, i.e.  {name: 'Nicolas'}
     console.log ('>>> After waiting synchronously, client got response:', response);
     process.exit();
 }
-
 
 // init example dummy server
 function init_server()
@@ -38,12 +39,15 @@ function init_server()
         WSS.on('message', function(message) {
             let object = JSON.parse(message);
             console.log ('>>> server received:', object);
-            const uniqId = object.ws_request_uniq_id; // remember to store the ID in scope-resistent manner, to avoid rewriting it from simultaneous requests
             // ########################################
             // make any dummy asynchronous action in backend and response back
-            setTimeout(() => {
-                WSS.send(JSON.stringify({name: 'Nicolas', 'age': 43, ws_response_uniq_id:uniqId}));
-            }, 2000);
+            if (object['hello'] === 'world') {
+                setTimeout(() => {
+                    const response = JSON.stringify({name: 'Nicolas', 'age': 43, ws_response_uniq_id: object.ws_request_uniq_id});
+                    console.log ('>>> server sends:', response);
+                    WSS.send(response);
+                }, 2000);
+            }
         });
     });
 }
