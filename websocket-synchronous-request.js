@@ -53,7 +53,7 @@ class ws_sync {
     }
 
     keyOfRequestId = 'ws_request_uniq_id';
-    keyNameOrFullObject = 'ws_response_uniq_id';
+    keyOfResponseId = 'ws_response_uniq_id';
     async fetchSync(dataToSend = {}, timeoutMs = 10000, expectedObjectStructure = null)
     {
         const uniqueId = this.waiterPrefix + '_' + this.uuidv4();
@@ -63,7 +63,7 @@ class ws_sync {
         let expectedObj = null;
         if (expectedObjectStructure === null) {
             expectedObj = {};
-            expectedObj[this.keyNameOrFullObject] = uniqueId;
+            expectedObj[this.keyOfResponseId] = uniqueId;
         } else if (this.isObject(expectedObjectStructure)) {
             expectedObj = expectedObjectStructure;
         } else { 
