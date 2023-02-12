@@ -1,6 +1,6 @@
 {
   "name": "ws-sync-request",
-  "version": "1.0.16",
+  "version": "1.0.20",
   "description": "Sync Ws request, like fetch",
   "main": "websocket-synchronous-request.js",
   "scripts": {},
